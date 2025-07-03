@@ -1,0 +1,248 @@
+syntax = "proto3";
+
+package lms;
+
+// Request and Response messages
+message RegisterRequest {
+    string username = 1;
+    string password = 2;
+    string role = 3;
+}
+
+message RegisterResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message LoginRequest {
+    string username = 1;
+    string password = 2;
+}
+
+message LoginResponse {
+    bool success = 1;
+    string token = 2;
+    string role = 3;
+}
+
+message LogoutRequest {
+    string token = 1;
+}
+
+message LogoutResponse {
+    bool success = 1;
+}
+
+// Modify to include a file for uploading assignments
+message PostRequest {
+    string token = 1;
+    string type = 2;
+    bytes file = 3;  // Binary content for PDF file
+    string filename = 4;  // Name of the uploaded file
+    string data = 5;  // Use this for queries or responses
+    string studentId = 6;  // For instructors responding to a specific student
+}
+
+message PostResponse {
+    bool success = 1;
+}
+
+// Modify to include file data in the response
+message GetRequest {
+    string token = 1;
+    string type = 2;
+    string studentId = 3;
+}
+
+message DataEntry {
+    string id = 1;
+    string filename = 2;  // The file's name
+    bytes file = 3;  // The file's binary content
+    string data = 4;      // Add this line for the response content(Get Instructor responses)
+    string instructor = 5;
+}
+
+message GetResponse {
+    bool success = 1;
+    string message = 2; // Add this line
+    repeated DataEntry entries = 3; // Your existing entries field
+}
+
+
+// Grade request for instructors
+message GradeRequest {
+    string token = 1;
+    string studentId = 2;
+    string grade = 3;
+}
+
+message GradeResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+// for student 
+message GetGradeRequest {
+    string token = 1;
+}
+
+message GetGradeResponse {
+    bool success = 1;
+    string grade = 2;
+}
+
+// LLM Query Handling
+message QueryRequest {
+    string token = 1;
+    string query = 2;
+}
+
+message QueryResponse {
+    bool success = 1;
+    string response = 2;
+}
+
+// Service definition for LMS
+service LMS {
+    rpc Register(RegisterRequest) returns (RegisterResponse);
+    rpc Login(LoginRequest) returns (LoginResponse);
+    rpc Logout(LogoutRequest) returns (LogoutResponse);
+    rpc Post(PostRequest) returns (PostResponse);
+    rpc Get(GetRequest) returns (GetResponse);
+    rpc GradeAssignment(GradeRequest) returns (GradeResponse);
+    rpc GetGrade(GetGradeRequest) returns (GetGradeResponse);
+    rpc GetLLMAnswer(QueryRequest) returns (QueryResponse);
+    rpc GetUnansweredQueries(GetRequest) returns (GetResponse);  // Instructor views unanswered queries
+    rpc RespondToQuery(PostRequest) returns (PostResponse);      // Instructor replies to queries
+    rpc GetInstructorResponse(GetRequest) returns (GetResponse); // Students get responses from instructors
+    // New RPC to get the current leader (88)
+    rpc WhoIsLeader(Empty) returns (LeaderResponse);  // New: Identify current leader for client
+}
+
+// Tutoring server for LLM-based assistance
+service Tutoring {
+    rpc GetLLMAnswer(QueryRequest) returns (QueryResponse);
+}
+
+service RaftService {
+  rpc RequestVote (RequestVoteRequest) returns (RequestVoteResponse);
+  rpc AppendEntries (AppendEntriesRequest) returns (AppendEntriesResponse);
+  rpc SetVal (SetValRequest) returns (SetValResponse);
+  rpc GetVal (GetValRequest) returns (GetValResponse);
+  rpc GetLeader (GetLeaderRequest) returns (GetLeaderResponse);
+  // New RPC to get the current leader (88)
+  rpc WhoIsLeader(Empty) returns (LeaderResponse);  // New: Identify current leader for client
+}
+
+
+service FileTransferService {
+    // Stream file from leader to follower
+  rpc SendFile(stream FileChunk) returns (FileTransferResponse);
+  rpc ReplicateData(ReplicateDataRequest) returns (ReplicateDataResponse); // New RPC for data replication
+}
+
+message FileChunk {
+  bytes content = 1;
+  string destination_path = 2;
+}
+
+message FileTransferResponse {
+  string status = 1;
+}
+
+
+// New Messages for Data Replication
+message ReplicateDataRequest {
+    string type = 1;  // "assignment" or "material"
+    string username = 2;  // Only for assignments
+    string instructor = 3;  // Only for materials
+    string filename = 4;
+    bytes file_content = 5;
+    string text = 6;  // Extracted text from PDF (assignments only)
+}
+
+message ReplicateDataResponse {
+    bool success = 1;
+}
+
+
+// Messages for Raft
+message TermCandIDPair {
+  int32 term = 1;
+  int32 candidateID = 2;
+}
+
+message TermResultPair {
+  int32 term = 1;
+  bool verdict = 2;
+}
+
+message LogEntry {
+  int32 term = 1;
+  string command = 2;
+}
+
+message RequestVoteRequest {
+  TermCandIDPair candidate = 1;
+  int32 lastLogIndex = 2;
+  int32 lastLogTerm = 3;
+}
+
+message RequestVoteResponse {
+  TermResultPair result = 1;
+}
+
+message AppendEntriesRequest {
+  TermLeaderIDPair leader = 1;
+  int32 prevLogIndex = 2;
+  int32 prevLogTerm = 3;
+  repeated LogEntry entries = 4;
+  int32 leaderCommit = 5;
+}
+
+message AppendEntriesResponse {
+  TermResultPair result = 1;
+  int32 term = 2;        // The current term of the responding server
+  bool success = 3;      // Whether the append entries request was successful
+}
+
+message SetValRequest {
+  string key = 1;
+  string value = 2;
+}
+
+message SetValResponse {
+  bool verdict = 1;
+}
+
+message GetValRequest {
+  string key = 1;
+}
+
+message GetValResponse {
+  bool verdict = 1;
+  string value = 2;
+}
+
+message GetLeaderRequest {}
+
+message GetLeaderResponse {
+  int32 nodeId = 1;
+  string nodeAddress = 2;
+}
+
+
+// Define message types for leader information (88)
+message LeaderResponse {
+    int32 leader_id = 1;  // ID of the leader server
+}
+
+message TermLeaderIDPair {
+    int32 leaderID = 1;
+    int32 term = 2;
+}
+
+message Empty {}
+
+
+

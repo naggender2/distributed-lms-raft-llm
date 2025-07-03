@@ -1,0 +1,170 @@
+================================================================================
+              LEARNING MANAGEMENT SYSTEM (LMS) - COMPLETE PROJECT REPORT
+================================================================================
+
+This Learning Management System (LMS) is a distributed, multi-server application 
+built using Python, gRPC, and Tkinter (for the GUI). The system supports student 
+and instructor interactions such as assignments, grading, uploading materials, and 
+real-time tutoring assistance powered by a lightweight LLM (ChatGPT-2). It is 
+designed to ensure high availability and data consistency across servers using 
+the RAFT consensus protocol.
+
+================================================================================
+                                MILESTONE 1 & 2
+================================================================================
+
+Introduction:
+
+In these milestones, we enhanced the LMS by adding basic student-instructor 
+interaction features and integrating a lightweight language model (ChatGPT-2) to 
+assist in tutoring. Students can upload assignments in PDF format, and instructors 
+can review and grade them. The tutoring server helps students by responding to 
+queries using the LLM.
+
+--------------------------------------
+1. LLM Integration:
+--------------------------------------
+- A lightweight version of ChatGPT-2 runs as the Tutoring Server.
+- It generates contextual answers for student-submitted queries.
+
+--------------------------------------
+2. Student Interaction:
+--------------------------------------
+- Students can:
+   a) Ask the LLM questions via the tutoring server.
+   b) Ask instructors directly for personalized help.
+
+--------------------------------------
+3. Assignment Management:
+--------------------------------------
+- Students upload assignments (PDF).
+- Instructors can download these for evaluation and grading.
+
+--------------------------------------
+4. Key Methods in Milestone 2:
+--------------------------------------
+
+- ask_query():  
+  Lets students choose between LLM-based or instructor-based help.
+
+- submit_query():  
+  Submits the student’s query to the system.
+
+- GetInstructorResponse():  
+  Retrieves instructor responses for queries.
+
+- RespondToQuery():  
+  Allows instructors to reply to student-submitted questions.
+
+- GetUnansweredQueries():  
+  Fetches questions still awaiting responses.
+
+- GetLLMAnswer():  
+  Sends a query to the tutoring server for LLM-based answers.
+
+
+================================================================================
+                                MILESTONE 3
+================================================================================
+
+This updated version of the LMS incorporates the RAFT consensus protocol for 
+distributed data consistency across five servers. It extends previous 
+functionality by ensuring system-wide synchronization, fault tolerance, and 
+leader election handling in case of failures.
+
+--------------------------------------
+System Architecture:
+--------------------------------------
+
+1. Client (Tkinter GUI):  
+   - Acts as a student or instructor interface.
+   - Sends requests to the LMS server or the tutoring server.
+
+2. LMS Server (x5):  
+   - Five RAFT-participating servers run in different environments.
+   - One of them acts as the **leader**, others as followers.
+   - All CRUD operations (assignments, grading, materials) are handled here.
+
+3. Tutoring Server:  
+   - Processes queries sent by students and returns ChatGPT-2 responses.
+
+
+================================================================================
+                           SETUP INSTRUCTIONS (MILESTONE 3)
+================================================================================
+
+--------------------------------------
+PREREQUISITES:
+--------------------------------------
+
+1. Python 3.9 or higher  
+2. Required Python Libraries:
+   - grpcio
+   - grpcio-tools
+   - tkinter
+   - transformers
+   - protobuf
+   - PyPDF2
+   - torch
+
+Install them using:
+
+    pip install grpcio grpcio-tools transformers protobuf PyPDF2 torch
+
+
+--------------------------------------
+STEPS TO RUN THE PROGRAM:
+--------------------------------------
+
+1. Generate gRPC Code:
+   (Skip if `lms_pb2.py` and `lms_pb2_grpc.py` exist)
+
+    python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. lms.proto
+
+2. Run Five LMS Servers:
+   (on five different machines or network interfaces)
+
+    Server 1:
+    python lms_server.py 1 50051 <ip2>:50052 <ip3>:50053 <ip4>:50054 <ip5>:50055
+
+    Server 2:
+    python lms_server.py 2 50052 <ip1>:50051 <ip3>:50053 <ip4>:50054 <ip5>:50055
+
+    Server 3:
+    python lms_server.py 3 50053 <ip1>:50051 <ip2>:50052 <ip4>:50054 <ip5>:50055
+
+    Server 4:
+    python lms_server.py 4 50054 <ip1>:50051 <ip2>:50052 <ip3>:50053 <ip5>:50055
+
+    Server 5:
+    python lms_server.py 5 50055 <ip1>:50051 <ip2>:50052 <ip3>:50053 <ip4>:50054
+
+    ⚠️ Edit IPs in `lms_gui_final.py` and `lms_server.py` before running.
+
+3. Run the Tutoring Server:
+
+    python tutoring_server.py
+
+4. Run the GUI Client:
+
+    python lms_gui_final.py
+
+
+================================================================================
+                                   NOTES
+================================================================================
+
+- **Leader Detection:**  
+  The client connects to the current RAFT leader. If a new leader is elected, the 
+  client automatically reconnects.
+
+- **Data Consistency:**  
+  RAFT protocol replicates logs across all servers to ensure consistent data.
+
+- **Firewall & Port Access:**  
+  Ensure that each machine/server allows incoming traffic on the relevant ports.
+
+
+================================================================================
+                         END OF CONSOLIDATED LMS REPORT
+================================================================================
