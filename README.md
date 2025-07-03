@@ -104,10 +104,11 @@ pip install grpcio grpcio-tools transformers protobuf PyPDF2 torch
 3. **Run LMS Servers (on separate machines or terminals)**
    - Example commands (adjust IPs/ports as needed):
      ```bash
-     python lms_server.py 1 50051    
-     python lms_server.py 2 50052    
+     python lms_server.py 1 50051 <peer1> <peer2> <peer3> <peer4>
+     python lms_server.py 2 50052 <peer1> <peer2> <peer3> <peer4>
      # ...repeat for all 5 servers
      ```
+
 
 4. **Run the Tutoring Server**
    ```bash
